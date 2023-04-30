@@ -107,17 +107,39 @@ class CCNA:
         G = nx.DiGraph()
         G.add_weighted_edges_from(edges)
         return G
-        
+    
+class IP:
 
-#create graph instance and print temporal results
+    def __init__(self, G):
+        self.G = G
+        self.countries = list(G.nodes)
+
+        # Calculate acceptance and rejection rates for each pair
+        self.acceptance, self.rejection = self.pairwise_weights()
+
+        # Store influence and passivity values for each country
+        self.influence = np.ones(len(self.countries))
+        self.passivity = np.ones(len(self.countries))
+
+    def pairwise_weights(self):
+        acceptance = []
+        rejection = []
+        return acceptance, rejection
+
+# Temporal graph
+print("Running temporal graph...")
 names = ["Environmental_Protection_Expenditures", "Environmental_Taxes", "Fossil_Fuel_Subsidies", "Green_Bonds"]
 obj = CCNA(names[int(sys.argv[1])])
+print("Temporal Metrics:\n", obj.temporal_metrics())
 
-#derive variables
+# Directed influence graph
+print("Building directed graph...")
 G = obj.influence_graph()
 metrics = {"Nodes": G.number_of_nodes(), "Edges": G.number_of_edges(), "Clustering": nx.average_clustering(G),\
            "Countries": len(obj.countries), "Policies": len(obj.policies)}
+print("Directed Graph Values:\n", metrics)
 
-#print some results
-print(metrics)
-print(obj.temporal_metrics())
+# Initializing IP values
+print("Loading graph into IP algorithm...")
+ip_obj = IP(G)
+print("Influence Values:\n", ip_obj.influence)
