@@ -176,15 +176,57 @@ class IP:
     def __init__(self, G):
         self.G = G
         self.countries = list(G.nodes)
+        self.N = len(self.countries)
+
+        # Store influence and passivity values for each iteration
+        self.influence = []
+        self.passivity = []
 
         # Calculate acceptance and rejection rates for each pair
         self.acceptance, self.rejection = self.pairwise_weights()
 
-        # Store influence and passivity values for each country
-        self.influence = np.ones(len(self.countries))
-        self.passivity = np.ones(len(self.countries))
-
     def pairwise_weights(self):
-        acceptance = []
-        rejection = []
+        # Acceptance rates
+        adjacency = np.zeros((self.N, self.N)) + nx.adjacency_matrix(self.G)
+        b = adjacency.sum(axis=0)
+        inverse = np.divide(1, b, where = (b!=0)) 
+        acceptance = np.multiply(inverse, adjacency)
+
+        # Rejection rates
+        not_adjacency = np.ones((self.N, self.N)) - adjacency
+        b = not_adjacency.sum(axis=0)
+        inverse = np.divide(1, b, where = (b!=0))
+        rejection = np.multiply(inverse, not_adjacency)
+
         return acceptance, rejection
+
+    def update_passivity(self, I):
+        P = []
+        for i in range(self.N):
+            P_i = 0
+            for j in range(self.N):
+                P_i += self.rejection[j, i] * I[j]
+            P.append(P_i)
+        return np.array(P)
+    
+    def update_influence(self, P):
+        I = []
+        for i in range(self.N):
+            I_i = 0
+            for j in range(self.N):
+                I_i += self.acceptance[i, j] * P[j]
+            I.append(I_i)
+        return np.array(I)
+
+    def iterate(self, M):
+        I = np.ones(self.N)
+        P = np.ones(self.N)
+
+        # Run M iterations
+        for m in range(M):
+            P = self.update_passivity(I)
+            I = self.update_influence(P)
+            P /= P.sum()
+            I /= I.sum()
+            self.influence.append(I)
+            self.passivity.append(P)
