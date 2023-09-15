@@ -39,6 +39,7 @@ class PolicyNet:
         self.exp_years = self.add_edges(G, expenditures, exp_country_nodes, exp_policy_nodes)
 
         self.two_way_country_lookup = create_country_name_lookup(base_dir)
+        self.G = G
 
     def _obtain_country_and_policies(self, df : pd.DataFrame) -> Tuple[Set, Set]:
         county_nodes = set(df["ISO2"].unique())
