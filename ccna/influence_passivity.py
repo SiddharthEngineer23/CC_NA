@@ -1,12 +1,12 @@
 import pandas as pd
 import numpy as np
 import networkx as nx
-from networkx.algorithms import bipartite
-import matplotlib.pyplot as plt
 import sys
-from cluster_metrics import country_count, butterflies, caterpillars
-from policy_net import PolicyNet
-    
+from ccna.policy_net import PolicyNet
+
+"""
+Class which takes an influence graph as input and computes influence-passivity values
+"""
 class IP:
 
     def __init__(self, G):

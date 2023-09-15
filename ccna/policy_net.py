@@ -1,40 +1,20 @@
 import pandas as pd
 import numpy as np
 import networkx as nx
-from networkx.algorithms import bipartite
-from cluster_metrics import country_count, butterflies, caterpillars
-import matplotlib.pyplot as plt
+from ccna.cluster_metrics import country_count, butterflies, caterpillars
 import sys
 from typing import Set, Tuple, List
+from ccna.two_way_dict import create_country_name_lookup
 
-# Creates a Two-way look up table
-class TwoWayDict(dict):
-    
-    def __setitem__(self, key, value):
-        # Remove any previous connections with these values
-        if key in self:
-            del self[key]
-        if value in self:
-            del self[value]
-        dict.__setitem__(self, key, value)
-        dict.__setitem__(self, value, key)
+"""
+Class for creating a bipartite country-policy network
 
-    def __delitem__(self, key):
-        dict.__delitem__(self, self[key])
-        dict.__delitem__(self, key)
-
-    def __len__(self):
-        """Returns the number of connections"""
-        return dict.__len__(self) // 2
-    
-    def from_dict(self, user_dict):
-        for key, value in user_dict.items():
-            dict.__setitem__(self, key, value)
-            dict.__setitem__(self, value, key)
-
+Params
+base_dir (str) : ie. /Users/ME/Documents/CC_NA/
+"""
 class PolicyNet:
-
-    def __init__(self):
+    def __init__(self, base_dir):
+        self.base_dir = base_dir
         subsidy, sub_country_nodes, sub_policy_nodes = self.load_subsidy_data()
         green_bonds, bond_country_nodes, bond_policy_nodes = self.load_green_bonds()
         taxes, tax_country_nodes, tax_policy_nodes = self.load_taxes()
@@ -53,33 +33,41 @@ class PolicyNet:
         G.add_nodes_from(policy_node_attributes.keys())
         nx.set_node_attributes(G, policy_node_attributes)
 
-        tax_years = self.add_edges(G, taxes, tax_country_nodes, tax_policy_nodes)
-        bond_years = self.add_edges(G, green_bonds, bond_country_nodes, bond_policy_nodes)
-        subsidy_years = self.add_edges(G, subsidy, sub_country_nodes, sub_policy_nodes)
-        exp_years = self.add_edges(G, expenditures, exp_country_nodes, exp_policy_nodes)
+        self.tax_years = self.add_edges(G, taxes, tax_country_nodes, tax_policy_nodes)
+        self.bond_years = self.add_edges(G, green_bonds, bond_country_nodes, bond_policy_nodes)
+        self.subsidy_years = self.add_edges(G, subsidy, sub_country_nodes, sub_policy_nodes)
+        self.exp_years = self.add_edges(G, expenditures, exp_country_nodes, exp_policy_nodes)
 
-        country_name_conversion = self.load_country_name_conversion()
-        two_way_country_lookup = self.create_country_name_lookup(country_name_conversion)
+        self.two_way_country_lookup = create_country_name_lookup(base_dir)
+
+    def _obtain_country_and_policies(self, df : pd.DataFrame) -> Tuple[Set, Set]:
+        county_nodes = set(df["ISO2"].unique())
+        policy_nodes = set(df["CTS_Name"].unique())
+        return (county_nodes, policy_nodes)
     
     def load_subsidy_data(self):
-        subsidy = pd.read_csv('input/policy/Fossil_Fuel_Subsidies.csv', index_col=0, keep_default_na=False, na_values="")
-        sub_country_nodes, sub_policy_nodes = self.obtain_country_and_policies(subsidy)
+        subsidy = pd.read_csv(f'{self.base_dir}input/policy/Fossil_Fuel_Subsidies.csv', index_col=0, keep_default_na=False, na_values="")
+        subsidy = subsidy[subsidy.Unit == "Percent of GDP"]
+        sub_country_nodes, sub_policy_nodes = self._obtain_country_and_policies(subsidy)
         return subsidy, sub_country_nodes, sub_policy_nodes
 
     def load_green_bonds(self):
-        green_bonds = pd.read_csv("input/policy/Green_Bonds.csv", index_col=0, keep_default_na=False, na_values="")
+        green_bonds = pd.read_csv(f"{self.base_dir}input/policy/Green_Bonds.csv", index_col=0, keep_default_na=False, na_values="")
         green_bonds = green_bonds[np.logical_not(green_bonds["ISO2"].isna())]
-        bond_country_nodes, bond_policy_nodes = self.obtain_country_and_policies(green_bonds)
+        green_bonds = green_bonds[green_bonds.Unit == "Percent of GDP"]
+        bond_country_nodes, bond_policy_nodes = self._obtain_country_and_policies(green_bonds)
         return green_bonds, bond_country_nodes, bond_policy_nodes
 
     def load_taxes(self):
-        taxes = pd.read_csv("input/policy/Environmental_Taxes.csv", index_col=0, keep_default_na=False, na_values="")
-        tax_country_nodes, tax_policy_nodes = self.obtain_country_and_policies(taxes)
+        taxes = pd.read_csv(f"{self.base_dir}input/policy/Environmental_Taxes.csv", index_col=0, keep_default_na=False, na_values="")
+        taxes = taxes[taxes.Unit == "Percent of GDP"]
+        tax_country_nodes, tax_policy_nodes = self._obtain_country_and_policies(taxes)
         return taxes, tax_country_nodes, tax_policy_nodes
 
     def load_expenditures(self):
-        expenditures = pd.read_csv("input/policy/Environmental_Protection_Expenditures.csv", index_col=0, keep_default_na=False, na_values="")
-        exp_country_nodes, exp_policy_nodes = self.obtain_country_and_policies(expenditures)
+        expenditures = pd.read_csv(f"{self.base_dir}input/policy/Environmental_Protection_Expenditures.csv", index_col=0, keep_default_na=False, na_values="")
+        expenditures = expenditures[expenditures.Unit == "Percent of GDP"]
+        exp_country_nodes, exp_policy_nodes = self._obtain_country_and_policies(expenditures)
         return expenditures, exp_country_nodes, exp_policy_nodes
 
     def create_country_node_attributes(self, tax_country_nodes, exp_country_nodes, bond_country_nodes, sub_country_nodes):
@@ -117,24 +105,6 @@ class PolicyNet:
             policy_node_attributes[policy] = {"bipartite": 1, "policies": policies}
 
         return policy_node_attributes
-
-    def load_country_name_conversion(self):
-        country_name_conversion = pd.read_csv("input/wikipedia-iso-country-codes.csv")
-        country_name_conversion.rename(columns={"English short name lower case": "Country Name", "Alpha-2 code": "ISO2", "Alpha-3 code": "ISO3"}, inplace=True)
-        return country_name_conversion
-
-    def create_country_name_lookup(self, country_name_conversion):
-        two_way_country_lookup = TwoWayDict()
-        oneway_lookup = country_name_conversion.set_index("Country Name")["ISO2"].to_dict()
-        two_way_country_lookup.from_dict(oneway_lookup)
-        return two_way_country_lookup
-
-
-    def obtain_country_and_policies(self, df : pd.DataFrame) -> Tuple[Set, Set]:
-        county_nodes = set(df["ISO2"].unique())
-        policy_nodes = set(df["CTS_Name"].unique())
-        
-        return (county_nodes, policy_nodes)
     
     """
     Adds the edge data from the dataframe into the graph. Returns the list of years that this policy is invested in
