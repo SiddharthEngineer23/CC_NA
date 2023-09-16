@@ -25,7 +25,7 @@ class TwoWayDict(dict):
             dict.__setitem__(self, value, key)
 
 def _load_country_name_conversion(base_dir):
-    country_name_conversion = pd.read_csv(f"{base_dir}input/wikipedia-iso-country-codes.csv")
+    country_name_conversion = pd.read_csv(f"{base_dir}input/wikipedia-iso-country-codes.csv", keep_default_na=False)
     country_name_conversion.rename(columns={"English short name lower case": "Country Name", "Alpha-2 code": "ISO2", "Alpha-3 code": "ISO3"}, inplace=True)
     return country_name_conversion
 
