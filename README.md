@@ -2,9 +2,9 @@
 This repository contains several methods and analyses for historical climate change policy data.
 Our main model splits countries and policies into a bipartite graph where edges represent the participation of countries in specific policies.
 From that, we will try out the following analysis methods:
-- Temporally calculating various graphwide metrics (from 1985-present) (TODO - copy source)
-- Change point analysis (TODO - copy source)
-- Converting bipartite model into an influence graph to calculate influence-passivity values (TODO - copy source)
+- Temporally calculating various graphwide metrics (from 1985-present)
+- Change point detection
+- Converting bipartite model into an influence graph to calculate influence-passivity values
 
 ### Setup
 
@@ -31,3 +31,8 @@ There are several notebooks which reflect our analyses at different points throu
 - `notebooks/01 - final report.ipynb` contains our analyses from the final project report of CSE 5245: Introduction to Network Science taught by Professor Srinivasan Parthasarathy at The Ohio State University. This notebook shows much of the data processing steps, ideas behind the method implementation, and more.
 - `notebooks/02 - change point detection.ipynb` documents some of our main structural changes in building the graph, cleaning up readability issues from before, and furthering the change point detection analyses.
 - `notebooks/03 - walkthrough.ipynb` goes step-by-step into how to use the package based on its current implementation. Much of the behind the scenes work is obscured in this notebook, as it is more so tailored to current usage.
+
+### Sources
+- Butterfly community structure paper: https://www.osti.gov/servlets/purl/1561802
+- Influence and Passivity paper: https://link.springer.com/chapter/10.1007/978-3-642-23808-6_2
+- Change Point Detection:
