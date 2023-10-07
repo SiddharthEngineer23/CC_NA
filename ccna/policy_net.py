@@ -182,11 +182,21 @@ class PolicyNet:
     """
     Return a dataframe displaying various metrics for each year
     """
-    def temporal_metrics(self, G : nx.MultiGraph, start_year : int, end_year : int):
+    def temporal_metrics(self, G : nx.MultiGraph, start_year = None, end_year = None):
+        # Set start/end years to min/max values if not given
+        if start_year is None or end_year is None:
+            years = [data['year'] for u, v, data in G.edges(data=True)]
+            if start_year is None:
+                start_year = min(years)
+            if end_year is None:
+                end_year = max(years)
+
         results = []
         for year in range(start_year, end_year + 1):
             subgraph = self.return_subgraph_year(G, year)
-            results.append(self.metrics(subgraph))
+            metrics = self.metrics(subgraph)
+            metrics["Year"] = year
+            results.append(metrics)
         return pd.DataFrame(results)
     
     """

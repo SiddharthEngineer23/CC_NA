@@ -29,6 +29,7 @@ The entire codebase is build inside the `ccna/` directory. Several of the key fe
 
 There are several notebooks which reflect our analyses at different points throughout the project.
 - `notebooks/01 - final report.ipynb` contains our analyses from the final project report of CSE 5245: Introduction to Network Science taught by Professor Srinivasan Parthasarathy at The Ohio State University. This notebook shows much of the data processing steps, ideas behind the method implementation, and more.
+- `notebooks/1.5 - final report.pdf` shows the final paper submitted for CSE 5245.
 - `notebooks/02 - change point detection.ipynb` documents some of our main structural changes in building the graph, cleaning up readability issues from before, and furthering the change point detection analyses.
 - `notebooks/03 - walkthrough.ipynb` goes step-by-step into how to use the package based on its current implementation. Much of the behind the scenes work is obscured in this notebook, as it is more so tailored to current usage.
 
